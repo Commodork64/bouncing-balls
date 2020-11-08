@@ -1,0 +1,15 @@
+{
+	"authors": [
+		"calin"
+	],
+	"copyright": "Copyright © 2020, calin",
+	"dependencies": {
+		"raylib-d": "~>3.0.3"
+	},
+	"libs": [
+		"raylib"
+	],
+	"description": "Bouncing Balls in D with Raylib",
+	"license": "proprietary",
+	"name": "bouncing-balls"
+}
