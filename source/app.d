@@ -3,30 +3,51 @@ import raylib;
 
 struct Circle
 {
+  static int count = 0;
+
+  int id;
   Vector2 position;
   int xSpeed;
   int ySpeed;
   float radius;
   const Colors color;
+
+  this(Vector2 position, int xSpeed, int ySpeed, float radius, Colors color)
+  {
+
+    this.position = position;
+    this.xSpeed = xSpeed;
+    this.ySpeed = ySpeed;
+    this.radius = radius;
+    this.color = color;
+
+    id = count++;
+  }
 }
 
 // problem with values passed into CheckCollisionCircles?
-// bool checkCollisions(Circle circle, Circle[] circles)
-// {
-//   foreach (int i; circles)
-//   {
-//     if (circle.position == circles[i].position)
-//     {
-//       continue;
-//     }
-//     if (CheckCollisionCircles(circle.position, circle.radius,
-//         circles[i].position, circles[i].radius) == true)
-//     {
-//       return true;
-//     }
-//   }
-//   return false;
-// }
+bool checkCollisions(Circle[] circles)
+{
+  // verify this code is actually working.
+  for (int i = 0; i < circles.length; i++)
+  {
+    foreach (ref Circle c; circles)
+    {
+      if (c.id == circles[i].id)
+      {
+        continue;
+      }
+      else if (CheckCollisionCircles(c.position, c.radius, circles[i].position, circles[i].radius))
+      {
+        return true;
+      }
+    }
+  }
+
+  return false;
+  // this should never be hit
+  assert(0);
+}
 
 void main()
 {
@@ -41,10 +62,16 @@ void main()
   // Dyanmic arrays pass by value, by default.
   // Creating an array of Circle pointers and passing in the memory addresses
   // of the Circle struct instances allows me to access them through the array later
-  Circle*[] circles = [&blueCircle, &redCircle, &blackCircle, &magentaCircle, &maroonCircle];
+  //Circle*[] circles = [&blueCircle, &redCircle, &blackCircle, &magentaCircle, &maroonCircle];
+  // Had issues calling the pointer array with circle collision.
+  // Pointers are supposed to be rare in D, probably doing it the wrong way, so should
+  // use the dynamic array instead.
+  Circle[] circles = [
+    blueCircle, redCircle, blackCircle, magentaCircle, maroonCircle
+  ];
 
   SetTargetFPS(60);
-  InitWindow(800, 640, "Hello, World!");
+  InitWindow(800, 640, "Bouncing Balls!");
   scope (exit)
     CloseWindow(); // see https://dlang.org/spec/statement.html#scope-guard-statement
 
@@ -52,6 +79,7 @@ void main()
   {
 
     // Updating
+    // handles collision against walls
     foreach (ref circle; circles)
     {
       if (circle.position.x > GetScreenWidth - circle.radius || circle.position.x < 0
@@ -66,18 +94,12 @@ void main()
       }
       circle.position.x += circle.xSpeed;
       circle.position.y += circle.ySpeed;
-
-      //checkCollisions(circle, circles);
     }
+    // handles circle to circle collision
 
-    // Create a function to loop through each circle, looking for collision
-    if (CheckCollisionCircles(blackCircle.position, blackCircle.radius,
-        magentaCircle.position, magentaCircle.radius))
+    if (checkCollisions(circles))
     {
-      blackCircle.xSpeed = -blackCircle.xSpeed;
-      blackCircle.ySpeed = -blackCircle.ySpeed;
-      magentaCircle.xSpeed = -magentaCircle.xSpeed;
-      magentaCircle.ySpeed = -magentaCircle.ySpeed;
+      writef("circles have collided.");
     }
 
     // Drawing
