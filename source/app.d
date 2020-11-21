@@ -10,7 +10,7 @@ struct Circle
   int xSpeed;
   int ySpeed;
   float radius;
-  const Colors color;
+  Colors color;
 
   this(Vector2 position, int xSpeed, int ySpeed, float radius, Colors color)
   {
@@ -25,9 +25,19 @@ struct Circle
   }
 }
 
-// problem with values passed into CheckCollisionCircles?
-bool checkCollisions(Circle[] circles)
+struct Result
 {
+  Circle circle1;
+  Circle circle2;
+  bool result;
+}
+
+// problem with values passed into CheckCollisionCircles?
+Result checkCollisions(Circle[] circles)
+{
+
+  Result tempResult;
+
   // verify this code is actually working.
   for (int i = 0; i < circles.length; i++)
   {
@@ -39,19 +49,27 @@ bool checkCollisions(Circle[] circles)
       }
       else if (CheckCollisionCircles(c.position, c.radius, circles[i].position, circles[i].radius))
       {
-        return true;
+        return Result(c, circles[i], true);
+      }
+      else
+      {
+        tempResult = Result(c, circles[i], false);
       }
     }
   }
 
-  return false;
+  return tempResult;
   // this should never be hit
   assert(0);
 }
 
+void handleCircleCollision(Circle c1, Circle c2)
+{
+  writef("Handling collisions");
+}
+
 void main()
 {
-  writeln("Starting a raylib example.");
 
   Circle blueCircle = Circle(Vector2(400f, 320f), 5, 5, 20f, Colors.BLUE);
   Circle redCircle = Circle(Vector2(200f, 500f), -7, -14, 10f, Colors.RED);
@@ -97,9 +115,10 @@ void main()
     }
     // handles circle to circle collision
 
-    if (checkCollisions(circles))
+    Result collisResult = checkCollisions(circles);
+    if(collisResult.result)
     {
-      writef("circles have collided.");
+      handleCircleCollision(collisResult.circle1, collisResult.circle2);
     }
 
     // Drawing
