@@ -1,4 +1,4 @@
-import std.stdio;
+import std.stdio, std.math;
 import raylib;
 
 struct Circle
@@ -25,20 +25,8 @@ struct Circle
   }
 }
 
-struct Result
+void checkCollisions(Circle[] circles)
 {
-  Circle circle1;
-  Circle circle2;
-  bool result;
-}
-
-// problem with values passed into CheckCollisionCircles?
-Result checkCollisions(Circle[] circles)
-{
-
-  Result tempResult;
-
-  // verify this code is actually working.
   for (int i = 0; i < circles.length; i++)
   {
     foreach (ref Circle c; circles)
@@ -49,41 +37,69 @@ Result checkCollisions(Circle[] circles)
       }
       else if (CheckCollisionCircles(c.position, c.radius, circles[i].position, circles[i].radius))
       {
-        return Result(c, circles[i], true);
-      }
-      else
-      {
-        tempResult = Result(c, circles[i], false);
+        handleCircleCollision(c, circles[i]);
       }
     }
   }
-
-  return tempResult;
-  // this should never be hit
-  assert(0);
 }
 
-void handleCircleCollision(Circle c1, Circle c2)
+void handleCircleCollision(ref Circle c1, ref Circle c2)
 {
-  writef("Handling collisions");
+
+  // possibly the dirtiest circle collision response ever.
+  // handle x
+  if (c1.position.x < c2.position.x)
+  {
+    c1.position.x -= 1;
+    c2.position.x += 1;
+    if (c1.xSpeed > 0 && c2.xSpeed < 0)
+    {
+      c1.xSpeed = -c1.xSpeed;
+      c2.xSpeed = -c2.xSpeed;
+    }
+  }
+  else {
+    c2.position.x -= 1;
+    c1.position.x += 1;
+    if (c2.xSpeed > 0 && c1.xSpeed < 0)
+    {
+      c2.xSpeed = -c2.xSpeed;
+      c1.xSpeed = -c1.xSpeed;
+    }
+  }
+  // handle y
+  if (c1.position.y < c2.position.y)
+  {
+    c1.position.y -= 1;
+    c2.position.y += 1;
+    if (c1.ySpeed > 0 && c2.ySpeed < 0)
+    {
+      c1.ySpeed = -c1.ySpeed;
+      c2.ySpeed = -c2.ySpeed;
+    }
+  }
+  else {
+    c2.position.y -= 1;
+    c1.position.y += 1;
+    if (c2.ySpeed > 0 && c1.ySpeed < 0)
+    {
+      c2.ySpeed = -c2.ySpeed;
+      c1.ySpeed = -c1.ySpeed;
+    }
+  }
 }
 
 void main()
 {
 
-  Circle blueCircle = Circle(Vector2(400f, 320f), 5, 5, 20f, Colors.BLUE);
-  Circle redCircle = Circle(Vector2(200f, 500f), -7, -14, 10f, Colors.RED);
-  Circle blackCircle = Circle(Vector2(400f, 300f), 7, 4, 80f, Colors.BLACK);
-  Circle magentaCircle = Circle(Vector2(200f, 300f), -7, -4, 80f, Colors.MAGENTA);
-  Circle maroonCircle = Circle(Vector2(400f, 320f), -5, -5, 20f, Colors.MAROON);
+  // dyanmic arrays pass by value, therefore these can be const since they're
+  // 'not used' after creation
+  const Circle blueCircle = Circle(Vector2(600f, 320f), 5, 5, 20f, Colors.BLUE);
+  const Circle redCircle = Circle(Vector2(200f, 500f), -7, -14, 15f, Colors.RED);
+  const Circle blackCircle = Circle(Vector2(400f, 300f), 7, 4, 40f, Colors.BLACK);
+  const Circle magentaCircle = Circle(Vector2(200f, 300f), -7, -4, 30f, Colors.MAGENTA);
+  const Circle maroonCircle = Circle(Vector2(400f, 120f), -5, -5, 20f, Colors.MAROON);
 
-  // Dyanmic arrays pass by value, by default.
-  // Creating an array of Circle pointers and passing in the memory addresses
-  // of the Circle struct instances allows me to access them through the array later
-  //Circle*[] circles = [&blueCircle, &redCircle, &blackCircle, &magentaCircle, &maroonCircle];
-  // Had issues calling the pointer array with circle collision.
-  // Pointers are supposed to be rare in D, probably doing it the wrong way, so should
-  // use the dynamic array instead.
   Circle[] circles = [
     blueCircle, redCircle, blackCircle, magentaCircle, maroonCircle
   ];
@@ -97,7 +113,7 @@ void main()
   {
 
     // Updating
-    // handles collision against walls
+    // stop circles going off-screen, update position by speed
     foreach (ref circle; circles)
     {
       if (circle.position.x > GetScreenWidth - circle.radius || circle.position.x < 0
@@ -112,14 +128,10 @@ void main()
       }
       circle.position.x += circle.xSpeed;
       circle.position.y += circle.ySpeed;
+
     }
     // handles circle to circle collision
-
-    Result collisResult = checkCollisions(circles);
-    if(collisResult.result)
-    {
-      handleCircleCollision(collisResult.circle1, collisResult.circle2);
-    }
+    checkCollisions(circles);
 
     // Drawing
     BeginDrawing();
